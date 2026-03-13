@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TestPilot AI — QA & Automation Expert</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #080c10;
+      --surface: #0d1117;
+      --surface2: #161b22;
+      --accent: #00f5a0;
+      --accent2: #00d9f5;
+      --text: #e6edf3;
+      --muted: #7d8590;
+      --border: rgba(0,245,160,0.15);
+      --card: #0d1117;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.4;
+    }
+
+    /* ── NAVBAR ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 1.2rem 2rem;
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(8,12,16,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 1rem; font-weight: 700;
+      color: var(--accent);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+    .nav-logo span { color: var(--text); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: 0.85rem; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-cta {
+      background: var(--accent); color: #080c10;
+      padding: 0.5rem 1.2rem; border-radius: 4px;
+      font-size: 0.8rem; font-weight: 700; text-decoration: none;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      transition: opacity 0.2s;
+    }
+    .nav-cta:hover { opacity: 0.85; }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
+    .hamburger span { width: 24px; height: 2px; background: var(--text); border-radius: 2px; transition: all 0.3s; }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 8rem 2rem 4rem;
+      position: relative; overflow: hidden;
+    }
+    .hero-grid {
+      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0,245,160,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,245,160,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black, transparent);
+    }
+    .hero-glow {
+      position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0,245,160,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-content { max-width: 1200px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(0,245,160,0.08); border: 1px solid var(--border);
+      padding: 0.4rem 1rem; border-radius: 100px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem; color: var(--accent);
+      margin-bottom: 2rem;
+    }
+    .hero-tag::before { content: '●'; font-size: 0.5rem; animation: blink 1.5s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .hero-title {
+      font-size: clamp(2.8rem, 6vw, 5.5rem);
+      font-weight: 800; line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.5rem;
+    }
+    .hero-title .line2 { color: var(--accent); }
+    .hero-title .line3 { color: var(--muted); font-weight: 600; font-size: 0.55em; }
+
+    .hero-desc {
+      font-size: 1.1rem; color: var(--muted); line-height: 1.7;
+      max-width: 560px; margin-bottom: 2.5rem;
+    }
+    .hero-desc strong { color: var(--text); }
+
+    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 4rem; }
+    .btn-primary {
+      background: var(--accent); color: #080c10;
+      padding: 0.85rem 2rem; border-radius: 6px;
+      font-weight: 700; font-size: 0.9rem;
+      text-decoration: none; letter-spacing: 0.03em;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 30px rgba(0,245,160,0.2);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(0,245,160,0.35); }
+    .btn-outline {
+      border: 1px solid var(--border); color: var(--text);
+      padding: 0.85rem 2rem; border-radius: 6px;
+      font-weight: 600; font-size: 0.9rem;
+      text-decoration: none; transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .hero-stats {
+      display: flex; gap: 3rem; flex-wrap: wrap;
+    }
+    .stat { display: flex; flex-direction: column; gap: 0.2rem; }
+    .stat-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 2rem; font-weight: 700; color: var(--accent);
+    }
+    .stat-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* Terminal animation */
+    .hero-terminal {
+      position: absolute; right: 5%; top: 50%; transform: translateY(-50%);
+      width: 380px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    }
+    .terminal-bar {
+      background: #1c2128; padding: 0.7rem 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .t-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .t-dot.red { background: #ff5f57; }
+    .t-dot.yellow { background: #ffbd2e; }
+    .t-dot.green { background: #28c840; }
+    .terminal-title { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted); margin-left: 0.5rem; }
+    .terminal-body { padding: 1.2rem; font-family: 'Space Mono', monospace; font-size: 0.75rem; line-height: 1.8; }
+    .t-line { overflow: hidden; white-space: nowrap; }
+    .t-prompt { color: var(--accent); }
+    .t-cmd { color: var(--text); }
+    .t-output { color: var(--muted); }
+    .t-success { color: #28c840; }
+    .t-error { color: #ff5f57; }
+    .t-warn { color: #ffbd2e; }
+    .cursor { display: inline-block; width: 8px; height: 14px; background: var(--accent); animation: blink 1s infinite; vertical-align: middle; }
+
+    /* ── SECTIONS ── */
+    section { padding: 6rem 2rem; position: relative; }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    .section-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.15em;
+      margin-bottom: 0.8rem;
+      display: flex; align-items: center; gap: 0.7rem;
+    }
+    .section-tag::before { content: '//'; opacity: 0.5; }
+
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800; letter-spacing: -0.03em;
+      margin-bottom: 1rem; line-height: 1.1;
+    }
+    .section-sub { color: var(--muted); font-size: 1rem; line-height: 1.7; max-width: 560px; margin-bottom: 3.5rem; }
+
+    /* ── SERVICES ── */
+    #services { background: var(--surface); }
+    .services-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5px; background: var(--border);
+      border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+    }
+    .service-card {
+      background: var(--surface); padding: 2rem;
+      transition: background 0.3s;
+      cursor: default;
+    }
+    .service-card:hover { background: var(--surface2); }
+    .service-icon {
+      width: 44px; height: 44px;
+      background: rgba(0,245,160,0.08);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; margin-bottom: 1.2rem;
+    }
+    .service-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.6rem; }
+    .service-desc { font-size: 0.875rem; color: var(--muted); line-height: 1.65; margin-bottom: 1rem; }
+    .service-price {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem; color: var(--accent);
+    }
+
+    /* ── PROJECTS ── */
+    #projects {}
+    .projects-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.5rem;
+    }
+    .project-card {
+      background: var(--surface2);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .project-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+    .project-header {
+      padding: 1.5rem 1.5rem 0;
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .project-type {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem; color: var(--accent);
+      background: rgba(0,245,160,0.08);
+      padding: 0.25rem 0.6rem; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .project-status {
+      font-size: 0.7rem; padding: 0.25rem 0.6rem;
+      border-radius: 4px; font-weight: 600;
+    }
+    .status-live { background: rgba(40,200,64,0.12); color: #28c840; }
+    .status-sample { background: rgba(255,189,46,0.12); color: #ffbd2e; }
+    .project-body { padding: 1.2rem 1.5rem; }
+    .project-name { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .project-desc { font-size: 0.875rem; color: var(--muted); line-height: 1.65; margin-bottom: 1.2rem; }
+    .project-metrics {
+      display: flex; gap: 1.5rem; margin-bottom: 1.2rem;
+      padding: 0.8rem 1rem;
+      background: rgba(0,245,160,0.04);
+      border-radius: 8px; border: 1px solid var(--border);
+    }
+    .metric { display: flex; flex-direction: column; gap: 0.1rem; }
+    .metric-val { font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--accent); }
+    .metric-key { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .project-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .tag {
+      font-size: 0.7rem; padding: 0.2rem 0.6rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 100px; color: var(--muted);
+    }
+
+    /* Empty state */
+    .projects-empty {
+      text-align: center; padding: 4rem 2rem;
+      border: 1px dashed rgba(0,245,160,0.2);
+      border-radius: 12px; color: var(--muted);
+    }
+    .projects-empty .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .projects-empty h3 { color: var(--text); margin-bottom: 0.5rem; }
+
+    /* ── SKILLS ── */
+    #skills { background: var(--surface); }
+    .skills-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; }
+    .skill-group-title {
+      font-size: 0.75rem; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--accent);
+      font-family: 'Space Mono', monospace;
+      margin-bottom: 1.5rem;
+    }
+    .skill-item { margin-bottom: 1.2rem; }
+    .skill-header { display: flex; justify-content: space-between; margin-bottom: 0.4rem; }
+    .skill-name { font-size: 0.875rem; font-weight: 600; }
+    .skill-pct { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--accent); }
+    .skill-bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+    .skill-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px; width: 0; transition: width 1s ease; }
+
+    .badges-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.5rem; }
+    .badge {
+      display: flex; align-items: center; gap: 0.4rem;
+      background: var(--surface2); border: 1px solid rgba(255,255,255,0.06);
+      padding: 0.4rem 0.8rem; border-radius: 6px;
+      font-size: 0.8rem; color: var(--muted);
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+    /* ── PROCESS ── */
+    .process-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0; position: relative; }
+    .process-steps::before {
+      content: ''; position: absolute;
+      top: 1.5rem; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+    .step { padding: 0 1.5rem 0 0; }
+    .step-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem; color: var(--accent);
+      background: var(--bg); padding-right: 0.8rem;
+      position: relative; z-index: 1;
+      display: inline-block; margin-bottom: 1rem;
+    }
+    .step-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .step-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── CONTACT ── */
+    #contact { background: var(--surface); }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+    .contact-info { }
+    .contact-links { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
+    .contact-link {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1rem 1.2rem;
+      background: var(--surface2); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px; text-decoration: none; color: var(--text);
+      font-size: 0.875rem; font-weight: 600;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .contact-link:hover { border-color: var(--accent); transform: translateX(4px); }
+    .contact-link-icon { font-size: 1.2rem; }
+    .contact-link-label { flex: 1; }
+    .contact-link-arrow { color: var(--muted); transition: color 0.2s; }
+    .contact-link:hover .contact-link-arrow { color: var(--accent); }
+
+    /* Contact form */
+    .contact-form { display: flex; flex-direction: column; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-label { font-size: 0.8rem; color: var(--muted); font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; }
+    .form-input, .form-textarea {
+      background: var(--surface2); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px; padding: 0.8rem 1rem;
+      color: var(--text); font-family: 'Syne', sans-serif; font-size: 0.9rem;
+      outline: none; transition: border-color 0.2s;
+      resize: none;
+    }
+    .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+    .form-textarea { min-height: 120px; }
+    .form-submit {
+      background: var(--accent); color: #080c10;
+      border: none; padding: 0.9rem; border-radius: 6px;
+      font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.05em;
+      transition: opacity 0.2s;
+    }
+    .form-submit:hover { opacity: 0.85; }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 2rem;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-copy { font-size: 0.8rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { font-size: 0.8rem; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .hero-terminal { display: none; }
+      .skills-layout { grid-template-columns: 1fr; gap: 2rem; }
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .nav-links.open { display: flex; flex-direction: column; position: fixed; top: 60px; left: 0; right: 0; background: var(--surface); padding: 2rem; border-bottom: 1px solid var(--border); z-index: 99; }
+      .hamburger { display: flex; }
+      .hero-stats { gap: 1.5rem; }
+      .process-steps { grid-template-columns: 1fr; }
+      .process-steps::before { display: none; }
+      footer { flex-direction: column; text-align: center; }
+    }
+
+    /* ── ANIMATIONS ── */
+    .fade-up { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    /* Loading */
+    .loading-skeleton {
+      background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav>
+    <a href="#" class="nav-logo">Test<span>Pilot</span> <span style="color:var(--accent)">AI</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#services">Services</a></li>
+      <li><a href="#projects">Work</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <a href="#contact" class="nav-cta">Hire Me</a>
+    <div class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <div class="hero-tag" id="heroTag">Available for Projects</div>
+      <h1 class="hero-title">
+        <span id="heroLine1">Breaking Apps</span><br>
+        <span class="line2" id="heroLine2">Before Users Do.</span><br>
+        <span class="line3" id="heroLine3">AI-Powered QA & Test Automation</span>
+      </h1>
+      <p class="hero-desc" id="heroDesc">
+        <strong id="heroName">5+ years</strong> of QA expertise — Manual Testing, Selenium, Pytest & AI-based testing. Helping startups ship bug-free products with confidence.
+      </p>
+      <div class="hero-btns">
+        <a href="#projects" class="btn-primary">View My Work</a>
+        <a href="#contact" class="btn-outline">Let's Talk</a>
+      </div>
+      <div class="hero-stats" id="heroStats">
+        <div class="stat">
+          <span class="stat-num" id="stat1">5+</span>
+          <span class="stat-label">Years Experience</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="stat2">0</span>
+          <span class="stat-label">Projects Delivered</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="stat3">100%</span>
+          <span class="stat-label">Client Satisfaction</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminal -->
+    <div class="hero-terminal">
+      <div class="terminal-bar">
+        <div class="t-dot red"></div>
+        <div class="t-dot yellow"></div>
+        <div class="t-dot green"></div>
+        <span class="terminal-title">testpilot_audit.py</span>
+      </div>
+      <div class="terminal-body" id="terminalBody">
+        <div class="t-line"><span class="t-prompt">$ </span><span class="t-cmd">python audit.py --target client_app</span></div>
+        <div class="t-line"><span class="t-output">🔍 Scanning 47 endpoints...</span></div>
+        <div class="t-line"><span class="t-output">📱 Testing mobile responsiveness...</span></div>
+        <div class="t-line"><span class="t-error">❌ CRITICAL: Auth bypass found</span></div>
+        <div class="t-line"><span class="t-warn">⚠️  Payment API timeout (3.2s)</span></div>
+        <div class="t-line"><span class="t-warn">⚠️  XSS vulnerability in /search</span></div>
+        <div class="t-line"><span class="t-success">✓  Performance score: 94/100</span></div>
+        <div class="t-line"><span class="t-output">📄 Generating bug report...</span></div>
+        <div class="t-line"><span class="t-success">✅ Report ready: 12 issues found</span></div>
+        <div class="t-line"><span class="t-prompt">$ </span><span class="cursor"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section id="services">
+    <div class="container">
+      <p class="section-tag">What I Do</p>
+      <h2 class="section-title">Services</h2>
+      <p class="section-sub" id="servicesSubtitle">From quick audits to full automation pipelines — I find bugs before your users do.</p>
+      <div class="services-grid" id="servicesGrid">
+        <!-- Loaded from Firebase or defaults -->
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESS -->
+  <section id="process">
+    <div class="container">
+      <p class="section-tag">How I Work</p>
+      <h2 class="section-title fade-up">My Process</h2>
+      <div class="process-steps" style="margin-top:3rem">
+        <div class="step fade-up">
+          <div class="step-num">01 — DISCOVER</div>
+          <div class="step-title">Understand Your App</div>
+          <div class="step-desc">Free 30-min audit. I explore your app, identify risk areas, and map out the testing scope.</div>
+        </div>
+        <div class="step fade-up">
+          <div class="step-num">02 — EXECUTE</div>
+          <div class="step-title">Test Systematically</div>
+          <div class="step-desc">Manual + automated testing across all devices. Every bug caught, documented with screenshots.</div>
+        </div>
+        <div class="step fade-up">
+          <div class="step-num">03 — REPORT</div>
+          <div class="step-title">Clear Bug Reports</div>
+          <div class="step-desc">Priority-based reports (Critical/Medium/Low) with exact steps to reproduce. Dev-friendly format.</div>
+        </div>
+        <div class="step fade-up">
+          <div class="step-num">04 — VERIFY</div>
+          <div class="step-title">Confirm Fixes</div>
+          <div class="step-desc">After your team fixes bugs, I retest to confirm everything works. No issue slips through.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="container">
+      <p class="section-tag">Case Studies</p>
+      <h2 class="section-title">Projects</h2>
+      <p class="section-sub">Real work, real results. Each project demonstrates my testing methodology and impact.</p>
+      <div id="projectsContainer">
+        <!-- Loaded from Firebase -->
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills">
+    <div class="container">
+      <p class="section-tag">Technical Expertise</p>
+      <h2 class="section-title">Skills</h2>
+      <div class="skills-layout" id="skillsLayout">
+        <!-- Loaded from Firebase -->
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="container">
+      <p class="section-tag">Get In Touch</p>
+      <h2 class="section-title">Let's Work Together</h2>
+      <div class="contact-grid">
+        <div class="contact-info">
+          <p style="color:var(--muted); line-height:1.7; margin-bottom:1.5rem" id="contactDesc">
+            Looking for a reliable QA engineer who delivers fast, accurate results? I'm available for freelance projects, audits, and long-term retainers.
+          </p>
+          <div class="contact-links">
+            <a href="#" class="contact-link" id="upworkLink" target="_blank">
+              <span class="contact-link-icon">💼</span>
+              <span class="contact-link-label">Upwork Profile</span>
+              <span class="contact-link-arrow">→</span>
+            </a>
+            <a href="#" class="contact-link" id="emailLink">
+              <span class="contact-link-icon">📧</span>
+              <span class="contact-link-label" id="emailText">Email Me</span>
+              <span class="contact-link-arrow">→</span>
+            </a>
+            <a href="#" class="contact-link" id="linkedinLink" target="_blank">
+              <span class="contact-link-icon">🔗</span>
+              <span class="contact-link-label">LinkedIn</span>
+              <span class="contact-link-arrow">→</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <form class="contact-form" id="contactForm">
+            <div class="form-group">
+              <label class="form-label">Your Name</label>
+              <input type="text" class="form-input" placeholder="John Doe" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" placeholder="john@company.com" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Message</label>
+              <textarea class="form-textarea" placeholder="Tell me about your project..." required></textarea>
+            </div>
+            <button type="submit" class="form-submit">Send Message →</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <span class="footer-copy">© 2025 TestPilot AI — QA & Automation Expert</span>
+    <div class="footer-links">
+      <a href="admin.html">Admin</a>
+      <a href="#hero">Back to top ↑</a>
+    </div>
+  </footer>
+
+  <!-- FIREBASE SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // ── PASTE YOUR FIREBASE CONFIG HERE ──
+    const firebaseConfig = {
+      apiKey: "AIzaSyD3QIpkDZNXlF0J8OsDKlPhQJ-3SPVknww",
+      authDomain: "testpilot-portfolio.firebaseapp.com",
+      projectId: "testpilot-portfolio",
+      storageBucket: "testpilot-portfolio.firebasestorage.app",
+      messagingSenderId: "1000194447539",
+      appId: "1:1000194447539:web:e9a12a2eab646dbd6ab8c6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ── DEFAULT DATA (shown if Firebase not configured) ──
+    const defaults = {
+      hero: {
+        tag: "Available for Projects",
+        line1: "Breaking Apps",
+        line2: "Before Users Do.",
+        line3: "AI-Powered QA & Test Automation",
+        desc: "5+ years of QA expertise — Manual Testing, Selenium, Pytest & AI-based testing. Helping startups ship bug-free products with confidence.",
+        stat1: "5+", stat2: "10+", stat3: "100%"
+      },
+      services: [
+        { icon: "🔍", name: "QA Audit", desc: "Full app walkthrough. Bug report with priority levels delivered in 2-3 days.", price: "Starting ₹5,000" },
+        { icon: "🤖", name: "Test Automation", desc: "Selenium + Pytest automation scripts. Run 100s of tests in minutes.", price: "Starting ₹20,000" },
+        { icon: "📱", name: "Mobile Testing", desc: "Android & iOS testing. Real device + emulator coverage.", price: "Starting ₹8,000" },
+        { icon: "🔗", name: "API Testing", desc: "Postman & automated API test suites. Catch integration bugs early.", price: "Starting ₹10,000" },
+        { icon: "🛡️", name: "Security Testing", desc: "OWASP-based security checks. Find vulnerabilities before hackers do.", price: "Starting ₹15,000" },
+        { icon: "📊", name: "Monthly Retainer", desc: "Ongoing QA partner. Unlimited testing every sprint, priority support.", price: "₹15,000–30,000/mo" },
+      ],
+      skills: {
+        technical: [
+          { name: "Manual Testing", pct: 95 },
+          { name: "Selenium + Python", pct: 85 },
+          { name: "pytest Framework", pct: 82 },
+          { name: "API Testing (Postman)", pct: 70 },
+          { name: "Bug Reporting & Documentation", pct: 90 },
+        ],
+        tools: ["Selenium", "pytest", "Postman", "Jira", "GitHub", "Chrome DevTools", "Figma", "Notion", "VS Code", "Android Studio"]
+      },
+      contact: {
+        desc: "Looking for a reliable QA engineer who delivers fast, accurate results? Available for freelance projects, audits, and long-term retainers.",
+        email: "your@email.com",
+        upwork: "#",
+        linkedin: "#"
+      }
+    };
+
+    async function loadData() {
+      try {
+        // Load Hero
+        const heroDoc = await getDoc(doc(db, "content", "hero"));
+        const hero = heroDoc.exists() ? heroDoc.data() : defaults.hero;
+        applyHero(hero);
+
+        // Load Services
+        const servicesDoc = await getDoc(doc(db, "content", "services"));
+        const services = servicesDoc.exists() ? servicesDoc.data().items : defaults.services;
+        renderServices(services);
+
+        // Load Projects
+        const projectsSnap = await getDocs(query(collection(db, "projects"), orderBy("order", "asc")));
+        const projects = projectsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderProjects(projects);
+
+        // Load Skills
+        const skillsDoc = await getDoc(doc(db, "content", "skills"));
+        const skills = skillsDoc.exists() ? skillsDoc.data() : defaults.skills;
+        renderSkills(skills);
+
+        // Load Contact
+        const contactDoc = await getDoc(doc(db, "content", "contact"));
+        const contact = contactDoc.exists() ? contactDoc.data() : defaults.contact;
+        applyContact(contact);
+
+      } catch (e) {
+        // Firebase not configured — use defaults
+        applyHero(defaults.hero);
+        renderServices(defaults.services);
+        renderProjects([]);
+        renderSkills(defaults.skills);
+        applyContact(defaults.contact);
+      }
+    }
+
+    function applyHero(h) {
+      document.getElementById("heroTag").innerHTML = `<span style="color:var(--accent)">●</span> ${h.tag || defaults.hero.tag}`;
+      document.getElementById("heroLine1").textContent = h.line1 || defaults.hero.line1;
+      document.getElementById("heroLine2").textContent = h.line2 || defaults.hero.line2;
+      document.getElementById("heroLine3").textContent = h.line3 || defaults.hero.line3;
+      document.getElementById("heroDesc").innerHTML = h.desc || defaults.hero.desc;
+      document.getElementById("stat1").textContent = h.stat1 || defaults.hero.stat1;
+      document.getElementById("stat2").textContent = h.stat2 || defaults.hero.stat2;
+      document.getElementById("stat3").textContent = h.stat3 || defaults.hero.stat3;
+    }
+
+    function renderServices(items) {
+      const grid = document.getElementById("servicesGrid");
+      grid.innerHTML = items.map(s => `
+        <div class="service-card">
+          <div class="service-icon">${s.icon}</div>
+          <div class="service-name">${s.name}</div>
+          <div class="service-desc">${s.desc}</div>
+          <div class="service-price">${s.price}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderProjects(items) {
+      const container = document.getElementById("projectsContainer");
+      if (!items.length) {
+        container.innerHTML = `
+          <div class="projects-empty">
+            <div class="empty-icon">🚀</div>
+            <h3>Projects Coming Soon</h3>
+            <p>First client projects will appear here. Currently accepting new clients!</p>
+          </div>`;
+        return;
+      }
+      container.innerHTML = `<div class="projects-grid">${items.map(p => `
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-type">${p.type || 'QA Audit'}</span>
+            <span class="project-status ${p.status === 'Live' ? 'status-live' : 'status-sample'}">${p.status || 'Sample'}</span>
+          </div>
+          <div class="project-body">
+            <div class="project-name">${p.name}</div>
+            <div class="project-desc">${p.desc}</div>
+            <div class="project-metrics">
+              ${(p.metrics || []).map(m => `
+                <div class="metric">
+                  <span class="metric-val">${m.val}</span>
+                  <span class="metric-key">${m.key}</span>
+                </div>`).join('')}
+            </div>
+            <div class="project-tags">
+              ${(p.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
+            </div>
+          </div>
+        </div>`).join('')}</div>`;
+    }
+
+    function renderSkills(data) {
+      const layout = document.getElementById("skillsLayout");
+      layout.innerHTML = `
+        <div>
+          <div class="skill-group-title">Core Skills</div>
+          ${(data.technical || defaults.skills.technical).map(s => `
+            <div class="skill-item">
+              <div class="skill-header">
+                <span class="skill-name">${s.name}</span>
+                <span class="skill-pct">${s.pct}%</span>
+              </div>
+              <div class="skill-bar"><div class="skill-fill" data-pct="${s.pct}"></div></div>
+            </div>`).join('')}
+        </div>
+        <div>
+          <div class="skill-group-title">Tools & Technologies</div>
+          <div class="badges-grid">
+            ${(data.tools || defaults.skills.tools).map(t => `
+              <div class="badge"><span class="badge-dot"></span>${t}</div>`).join('')}
+          </div>
+        </div>`;
+      animateSkills();
+    }
+
+    function applyContact(c) {
+      document.getElementById("contactDesc").textContent = c.desc || defaults.contact.desc;
+      document.getElementById("emailText").textContent = c.email || defaults.contact.email;
+      document.getElementById("emailLink").href = `mailto:${c.email || ''}`;
+      document.getElementById("upworkLink").href = c.upwork || '#';
+      document.getElementById("linkedinLink").href = c.linkedin || '#';
+    }
+
+    function animateSkills() {
+      const fills = document.querySelectorAll('.skill-fill');
+      const obs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.style.width = e.target.dataset.pct + '%';
+            obs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.3 });
+      fills.forEach(f => obs.observe(f));
+    }
+
+    // Scroll fade
+    const fadeEls = document.querySelectorAll('.fade-up');
+    new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.15 }).observe = function(el) {
+      IntersectionObserver.prototype.observe.call(this, el);
+    };
+    const fadeObs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.15 });
+    fadeEls.forEach(el => fadeObs.observe(el));
+
+    // Hamburger
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open');
+    });
+
+    // Contact form
+    document.getElementById('contactForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const btn = e.target.querySelector('.form-submit');
+      btn.textContent = '✅ Sent! I\'ll reply soon.';
+      btn.style.background = '#28c840';
+      e.target.reset();
+      setTimeout(() => { btn.textContent = 'Send Message →'; btn.style.background = ''; }, 4000);
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
