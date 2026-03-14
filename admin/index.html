@@ -106,6 +106,23 @@
     /* Range input */
     input[type="range"] { width: 100%; accent-color: var(--accent); }
 
+
+    /* Inbox */
+    .inbox-msg { background: var(--surface2); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 1.2rem 1.4rem; margin-bottom: 0.8rem; transition: border-color 0.2s; }
+    .inbox-msg.unread { border-left: 3px solid var(--accent); background: rgba(0,245,160,0.03); }
+    .inbox-msg-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
+    .inbox-name { font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
+    .inbox-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+    .inbox-email { font-size: 0.72rem; color: var(--muted); font-family: 'Space Mono',monospace; }
+    .inbox-time { font-size: 0.68rem; color: var(--muted); white-space: nowrap; }
+    .inbox-body { font-size: 0.85rem; color: rgba(230,237,243,0.7); line-height: 1.65; margin-bottom: 0.8rem; }
+    .inbox-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .btn-read { background: rgba(0,245,160,0.08); border: 1px solid var(--border); color: var(--accent); padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.72rem; cursor: pointer; font-family: 'Syne',sans-serif; transition: background 0.2s; }
+    .btn-read:hover { background: rgba(0,245,160,0.15); }
+    .btn-reply { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: var(--muted); padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.72rem; cursor: pointer; font-family: 'Syne',sans-serif; text-decoration: none; }
+    .inbox-empty { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+    .inbox-empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+
     /* Toast */
     .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--surface); border: 1px solid var(--accent); padding: 1rem 1.5rem; border-radius: 10px; font-size: 0.875rem; color: var(--text); z-index: 999; transform: translateY(100px); opacity: 0; transition: all 0.3s; pointer-events: none; }
     .toast.show { transform: translateY(0); opacity: 1; }
@@ -155,6 +172,7 @@
       <div class="sidebar-item" data-panel="projects">💼 Projects</div>
       <div class="sidebar-item" data-panel="skills">🛠️ Skills</div>
       <div class="sidebar-label">Settings</div>
+      <div class="sidebar-item" data-panel="inbox">📬 Inbox</div>
       <div class="sidebar-item" data-panel="contact">📧 Contact</div>
     </aside>
 
@@ -298,6 +316,17 @@
         </div>
       </div>
 
+      <!-- INBOX -->
+      <div class="panel" id="panel-inbox">
+        <div class="panel-header">
+          <h2 class="panel-title">Inbox <span id="unreadBadge" style="background:var(--accent);color:#080c10;font-size:0.7rem;padding:0.2rem 0.6rem;border-radius:100px;margin-left:0.5rem;vertical-align:middle"></span></h2>
+          <p class="panel-sub">Contact form submissions from your website</p>
+        </div>
+        <div id="inboxList">
+          <div style="color:var(--muted);text-align:center;padding:3rem">Loading messages...</div>
+        </div>
+      </div>
+
       <!-- CONTACT -->
       <div class="panel" id="panel-contact">
         <div class="panel-header"><h2 class="panel-title">Contact Links</h2><p class="panel-sub">Update before sharing portfolio</p></div>
@@ -319,7 +348,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, addDoc, deleteDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, addDoc, deleteDoc, orderBy, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
@@ -404,7 +433,7 @@
 
   // ── LOAD ALL ──
   async function loadAll() {
-    await Promise.all([loadHero(), loadServices(), loadProjects(), loadSkills(), loadContact()]);
+    await Promise.all([loadHero(), loadServices(), loadProjects(), loadSkills(), loadContact(), loadInbox()]);
   }
 
   // ── HERO ──
@@ -731,6 +760,72 @@
   });
 
   // ── CONTACT ──
+  // ── INBOX ──
+  async function loadInbox() {
+    try {
+      const snap = await getDocs(query(collection(db, "contacts"), orderBy("timestamp", "desc")));
+      const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const unread = msgs.filter(m => !m.read).length;
+
+      // Update badge
+      const badge = document.getElementById("unreadBadge");
+      if (unread > 0) { badge.textContent = unread + " new"; badge.style.display = "inline"; }
+      else { badge.style.display = "none"; }
+
+      // Update overview stat
+      document.getElementById("ov-projects").textContent = msgs.length;
+
+      const list = document.getElementById("inboxList");
+      if (!msgs.length) {
+        list.innerHTML = `<div class="inbox-empty"><div class="inbox-empty-icon">📬</div><p>No messages yet.<br>Share your portfolio link to get inquiries!</p></div>`;
+        return;
+      }
+
+      list.innerHTML = msgs.map(m => {
+        const date = new Date(m.timestamp);
+        const timeStr = date.toLocaleDateString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+        return `
+        <div class="inbox-msg ${!m.read ? 'unread' : ''}" id="msg-${m.id}">
+          <div class="inbox-msg-header">
+            <div>
+              <div class="inbox-name">
+                ${!m.read ? '<span class="inbox-dot"></span>' : ''}
+                ${m.name}
+              </div>
+              <div class="inbox-email">${m.email}</div>
+            </div>
+            <div class="inbox-time">${timeStr}</div>
+          </div>
+          <div class="inbox-body">${m.message}</div>
+          <div class="inbox-actions">
+            ${!m.read ? `<button class="btn-read" onclick="markRead('${m.id}')">✓ Mark as Read</button>` : `<span style="font-size:0.72rem;color:var(--muted)">✓ Read</span>`}
+            <a href="mailto:${m.email}?subject=Re: Your inquiry to QA Brothers&body=Hi ${m.name},%0D%0A%0D%0AThank you for reaching out!" class="btn-reply" target="_blank">✉️ Reply via Email</a>
+            <button class="btn-danger" onclick="deleteMsg('${m.id}')" style="margin-left:auto">Delete</button>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      document.getElementById("inboxList").innerHTML = `<div class="inbox-empty"><p>Could not load messages.</p></div>`;
+    }
+  }
+
+  window.markRead = async (id) => {
+    try {
+      await updateDoc(doc(db, "contacts", id), { read: true });
+      loadInbox();
+      toast("Marked as read");
+    } catch(e) { toast("Error", true); }
+  };
+
+  window.deleteMsg = async (id) => {
+    if (!confirm("Delete this message?")) return;
+    try {
+      await deleteDoc(doc(db, "contacts", id));
+      loadInbox();
+      toast("Message deleted");
+    } catch(e) { toast("Error", true); }
+  };
+
   async function loadContact() {
     try {
       const snap = await getDoc(doc(db, "content", "contact"));

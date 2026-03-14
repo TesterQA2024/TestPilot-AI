@@ -602,7 +602,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, collection, getDocs, addDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyD3QIpkDZNXlF0J8OsDKlPhQJ-3SPVknww",
@@ -755,14 +755,59 @@
     }
     animateCursor();
 
-    // Form
-    document.getElementById('contactForm').addEventListener('submit', e => {
+    // ── CONTACT FORM — Firebase + WhatsApp ──
+    document.getElementById('contactForm').addEventListener('submit', async e => {
       e.preventDefault();
       const btn = e.target.querySelector('.cf-btn');
-      btn.textContent = '✓ Sent! We\'ll be in touch soon.';
-      btn.style.background = '#2E7D32';
-      e.target.reset();
-      setTimeout(() => { btn.textContent = 'Send Message →'; btn.style.background = ''; }, 5000);
+      const inputs = e.target.querySelectorAll('input, textarea');
+      
+      const name    = e.target.querySelector('input[type="text"]').value.trim();
+      const email   = e.target.querySelector('input[type="email"]').value.trim();
+      const message = e.target.querySelector('textarea').value.trim();
+
+      btn.textContent = 'Sending...';
+      btn.disabled = true;
+
+      try {
+        // 1. Save to Firestore
+        await addDoc(collection(db, "contacts"), {
+          name, email, message,
+          timestamp: new Date().toISOString(),
+          read: false
+        });
+
+        // 2. WhatsApp Notification via CallMeBot
+        // ⚠️ REPLACE these with your details (see setup instructions below)
+        const WHATSAPP_NUMBER = "YOUR_WHATSAPP_NUMBER"; // e.g. "919898XXXXXX"
+        const CALLMEBOT_KEY   = "YOUR_CALLMEBOT_KEY";
+
+        if (WHATSAPP_NUMBER !== "YOUR_WHATSAPP_NUMBER") {
+          const waMsg = encodeURIComponent(
+            `🔔 New Contact - QA Brothers!\n\n👤 Name: ${name}\n📧 Email: ${email}\n💬 Message: ${message}`
+          );
+          await fetch(`https://api.callmebot.com/whatsapp.php?phone=${WHATSAPP_NUMBER}&text=${waMsg}&apikey=${CALLMEBOT_KEY}`)
+            .catch(() => {}); // silently fail if WA not configured
+        }
+
+        // 3. Success
+        btn.textContent = '✓ Sent! We\'ll be in touch soon.';
+        btn.style.background = '#2E7D32';
+        e.target.reset();
+        setTimeout(() => {
+          btn.textContent = 'Send Message →';
+          btn.style.background = '';
+          btn.disabled = false;
+        }, 5000);
+
+      } catch(err) {
+        btn.textContent = 'Error — please try again';
+        btn.style.background = '#c0392b';
+        btn.disabled = false;
+        setTimeout(() => {
+          btn.textContent = 'Send Message →';
+          btn.style.background = '';
+        }, 3000);
+      }
     });
   }
 
