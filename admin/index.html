@@ -172,6 +172,7 @@
       <div class="sidebar-item" data-panel="projects">💼 Projects</div>
       <div class="sidebar-item" data-panel="skills">🛠️ Skills</div>
       <div class="sidebar-label">Settings</div>
+      <div class="sidebar-item" data-panel="testimonials">⭐ Testimonials</div>
       <div class="sidebar-item" data-panel="inbox">📬 Inbox</div>
       <div class="sidebar-item" data-panel="contact">📧 Contact</div>
     </aside>
@@ -316,6 +317,61 @@
         </div>
       </div>
 
+      <!-- TESTIMONIALS -->
+      <div class="panel" id="panel-testimonials">
+        <div class="panel-header">
+          <h2 class="panel-title">Testimonials</h2>
+          <p class="panel-sub">Add client reviews — dikhenge website pe automatically</p>
+        </div>
+
+        <!-- Add New -->
+        <div class="form-section">
+          <div class="form-section-title">➕ Add New Testimonial</div>
+          <div class="form-group">
+            <label class="form-label">Client Review</label>
+            <textarea class="form-textarea" id="t-text" placeholder="QA Brothers found 15 critical bugs we missed. Highly recommend their audit service!" style="min-height:100px"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Client Name</label>
+              <input type="text" class="form-input" id="t-name" placeholder="Rahul Sharma"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Role / Title</label>
+              <input type="text" class="form-input" id="t-role" placeholder="Founder, CEO"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Company Name</label>
+              <input type="text" class="form-input" id="t-company" placeholder="TechStartup Pvt Ltd"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Project Type</label>
+              <input type="text" class="form-input" id="t-project" placeholder="QA Audit"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Stars (1-5)</label>
+              <select class="form-select" id="t-stars">
+                <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
+                <option value="4">⭐⭐⭐⭐ 4 Stars</option>
+                <option value="3">⭐⭐⭐ 3 Stars</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Display Order</label>
+              <input type="number" class="form-input" id="t-order" value="1"/>
+            </div>
+          </div>
+          <button class="btn-save" id="addTestimonialBtn">Add Testimonial →</button>
+        </div>
+
+        <div class="or-divider">── Existing Testimonials ──</div>
+        <div id="testimonialsList"></div>
+      </div>
+
       <!-- INBOX -->
       <div class="panel" id="panel-inbox">
         <div class="panel-header">
@@ -433,7 +489,7 @@
 
   // ── LOAD ALL ──
   async function loadAll() {
-    await Promise.all([loadHero(), loadServices(), loadProjects(), loadSkills(), loadContact(), loadInbox()]);
+    await Promise.all([loadHero(), loadServices(), loadProjects(), loadSkills(), loadContact(), loadInbox(), loadTestimonials()]);
   }
 
   // ── HERO ──
@@ -760,6 +816,68 @@
   });
 
   // ── CONTACT ──
+  // ── TESTIMONIALS ──
+  async function loadTestimonials() {
+    try {
+      const snap = await getDocs(query(collection(db, "testimonials"), orderBy("order","asc")));
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderTestimonialsList(items);
+    } catch(e) { renderTestimonialsList([]); }
+  }
+
+  function renderTestimonialsList(items) {
+    const list = document.getElementById("testimonialsList");
+    if (!items.length) {
+      list.innerHTML = `<div style="color:var(--muted);text-align:center;padding:2rem;border:1px dashed rgba(0,245,160,0.15);border-radius:10px">Koi testimonial nahi — pehla client aane ke baad add karo! ⭐</div>`;
+      return;
+    }
+    list.innerHTML = items.map(t => `
+      <div class="item-card">
+        <div class="item-card-header">
+          <div>
+            <div class="item-card-title">${'★'.repeat(t.stars||5)} ${t.name}</div>
+            <div class="item-card-sub" style="margin-top:0.2rem">${t.role}${t.company ? ' · ' + t.company : ''}</div>
+          </div>
+          <div class="item-card-actions">
+            <button class="btn-danger" onclick="deleteTestimonial('${t.id}')">Delete</button>
+          </div>
+        </div>
+        <div style="font-size:0.82rem;color:var(--muted);font-style:italic">"${(t.text||'').substring(0,120)}..."</div>
+      </div>`).join('');
+  }
+
+  document.getElementById("addTestimonialBtn").addEventListener("click", async () => {
+    const text = document.getElementById("t-text").value.trim();
+    const name = document.getElementById("t-name").value.trim();
+    if (!text || !name) { toast("Review aur naam zaroori hai", true); return; }
+    const btn = document.getElementById("addTestimonialBtn");
+    btn.textContent = "Adding..."; btn.disabled = true;
+    try {
+      await addDoc(collection(db, "testimonials"), {
+        text, name,
+        role: document.getElementById("t-role").value.trim(),
+        company: document.getElementById("t-company").value.trim(),
+        project: document.getElementById("t-project").value.trim(),
+        stars: parseInt(document.getElementById("t-stars").value),
+        order: parseInt(document.getElementById("t-order").value) || 1,
+        createdAt: new Date().toISOString()
+      });
+      toast("Testimonial added! ⭐");
+      ["t-text","t-name","t-role","t-company","t-project"].forEach(id => document.getElementById(id).value = "");
+      loadTestimonials();
+    } catch(e) { toast("Error adding", true); }
+    btn.textContent = "Add Testimonial →"; btn.disabled = false;
+  });
+
+  window.deleteTestimonial = async (id) => {
+    if (!confirm("Delete this testimonial?")) return;
+    try {
+      await deleteDoc(doc(db, "testimonials", id));
+      toast("Testimonial deleted");
+      loadTestimonials();
+    } catch(e) { toast("Error", true); }
+  };
+
   // ── INBOX ──
   async function loadInbox() {
     try {

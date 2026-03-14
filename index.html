@@ -345,6 +345,56 @@
     }
     .cf-btn:hover { background: var(--orange2); transform: translateY(-1px); }
 
+
+    /* ── TESTIMONIALS ── */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .testi-card {
+      background: #111110;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px; padding: 2rem;
+      position: relative; overflow: hidden;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .testi-card:hover { border-color: rgba(232,83,26,0.3); transform: translateY(-3px); }
+    .testi-card::before {
+      content: '\201C';
+      position: absolute; top: -0.1em; left: 0.5rem;
+      font-family: var(--serif); font-size: 8rem;
+      color: rgba(232,83,26,0.08); line-height: 1;
+      pointer-events: none;
+    }
+    .testi-stars { display: flex; gap: 0.2rem; margin-bottom: 1rem; }
+    .testi-star { color: var(--orange); font-size: 0.85rem; }
+    .testi-text {
+      font-size: 0.925rem; line-height: 1.8;
+      color: rgba(245,243,238,0.8);
+      margin-bottom: 1.5rem; position: relative; z-index: 1;
+      font-style: italic;
+    }
+    .testi-divider { height: 1px; background: rgba(255,255,255,0.06); margin-bottom: 1.2rem; }
+    .testi-author { display: flex; align-items: center; gap: 0.9rem; }
+    .testi-avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg, rgba(232,83,26,0.3), rgba(232,83,26,0.1));
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--display); font-size: 1rem; color: var(--orange);
+      flex-shrink: 0; border: 1px solid rgba(232,83,26,0.2);
+    }
+    .testi-info { display: flex; flex-direction: column; gap: 0.15rem; }
+    .testi-name { font-size: 0.875rem; font-weight: 500; color: var(--white); }
+    .testi-role { font-size: 0.72rem; color: var(--gray); font-family: var(--mono); }
+    .testi-project { font-size: 0.68rem; color: var(--orange); font-family: var(--mono); margin-top: 0.1rem; }
+    .testi-empty {
+      text-align: center; padding: 4rem 2rem;
+      border: 1px dashed rgba(255,255,255,0.08);
+      border-radius: 12px; color: var(--gray);
+    }
+    .testi-empty-title { font-family: var(--display); font-size: 1.5rem; margin-bottom: 0.5rem; color: rgba(245,243,238,0.3); }
+
     /* ── FOOTER ── */
     footer {
       padding: 2rem 3rem;
@@ -554,6 +604,19 @@
   </div>
 </section>
 
+<!-- TESTIMONIALS -->
+<section id="testimonials" class="section" style="background:var(--black)">
+  <div class="section-inner">
+    <p class="section-label reveal">What clients say</p>
+    <h2 class="services-title reveal" style="font-family:var(--display);font-size:clamp(3rem,6vw,6rem);letter-spacing:-0.01em;line-height:0.95;margin-bottom:4rem">
+      Client <em style="font-family:var(--serif);font-style:italic;color:var(--orange)">love.</em>
+    </h2>
+    <div id="testimonialsContainer">
+      <!-- Loaded from Firebase -->
+    </div>
+  </div>
+</section>
+
 <!-- CONTACT -->
 <section id="contact" class="section">
   <div class="section-inner">
@@ -646,6 +709,7 @@
         getDoc(doc(db,"content","contact")),
       ]);
       const projSnap = await getDocs(query(collection(db,"projects"), orderBy("order","asc")));
+      const testiSnap = await getDocs(query(collection(db,"testimonials"), orderBy("order","asc")));
 
       const hero = heroSnap.exists() ? heroSnap.data() : {};
       if (hero.tag) document.getElementById("heroBadge").textContent = hero.tag;
@@ -663,6 +727,9 @@
       const skills = skillSnap.exists() ? skillSnap.data() : defaults.skills;
       renderSkills(skills);
 
+      const testis = testiSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderTestimonials(testis);
+
       const contact = contactSnap.exists() ? contactSnap.data() : {};
       if (contact.desc) document.getElementById("contactDesc").textContent = contact.desc;
       if (contact.email) { document.getElementById("emailLink").href = `mailto:${contact.email}`; document.getElementById("emailText").textContent = contact.email; }
@@ -673,6 +740,7 @@
       renderServices(defaults.services);
       renderProjects([]);
       renderSkills(defaults.skills);
+      renderTestimonials([]);
     }
     initUI();
   }
@@ -708,6 +776,36 @@
           <div class="pc-tags">${(p.tags||[]).map(t=>`<span class="pc-tag">${t}</span>`).join('')}</div>
         </div>
       </div>`).join('')}</div>`;
+  }
+
+  function renderTestimonials(items) {
+    const c = document.getElementById("testimonialsContainer");
+    if (!items.length) {
+      c.innerHTML = `
+        <div class="testi-empty">
+          <div class="testi-empty-title">TESTIMONIALS COMING SOON</div>
+          <p style="font-size:0.82rem">Client reviews will appear here after first projects.</p>
+        </div>`;
+      return;
+    }
+    c.innerHTML = `<div class="testimonials-grid">${items.map(t => {
+      const stars = '★'.repeat(t.stars || 5);
+      const initials = (t.name || 'C').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+      return `
+        <div class="testi-card reveal">
+          <div class="testi-stars">${[...stars].map(() => `<span class="testi-star">★</span>`).join('')}</div>
+          <div class="testi-text">${t.text}</div>
+          <div class="testi-divider"></div>
+          <div class="testi-author">
+            <div class="testi-avatar">${initials}</div>
+            <div class="testi-info">
+              <span class="testi-name">${t.name}</span>
+              <span class="testi-role">${t.role}${t.company ? ' · ' + t.company : ''}</span>
+              ${t.project ? `<span class="testi-project">📋 ${t.project}</span>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }).join('')}</div>`;
   }
 
   function renderSkills(data) {
